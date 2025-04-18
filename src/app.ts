@@ -4,6 +4,8 @@ import cookieParser from "cookie-parser";
 import os from "os";
 import { StatusCodes } from "http-status-codes";
 import router from "./app/routes";
+import globalErrorHandler from "./app/middleware/globalErrorHandler";
+import notFound from "./app/middleware/notFound";
 const app: Application = express();
 
 // Middlewares
@@ -14,7 +16,7 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use("/api/v1", router);
 
-// Home route
+// Home Route
 app.get("/", (req: Request, res: Response, next: NextFunction) => {
     const currentDateTime = new Date().toISOString();
     const clientIp = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
@@ -43,5 +45,11 @@ app.get("/", (req: Request, res: Response, next: NextFunction) => {
         },
     });
 });
+
+// Global Error Handler
+app.use(globalErrorHandler);
+
+// Not Found Route
+app.use(notFound);
 
 export default app;
