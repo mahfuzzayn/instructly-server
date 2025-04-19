@@ -19,52 +19,17 @@ const userSchema = new Schema<IUser, UserModel>(
         },
         password: {
             type: String,
+            select: false,
             required: true,
         },
         role: {
             type: String,
-            enum: [UserRole.USER, UserRole.TUTOR],
-            default: UserRole.USER,
-        },
-        isTutor: {
-            type: Boolean,
-            default: false,
-        },
-        clientInfo: {
-            device: {
-                type: String,
-                enum: ["pc", "mobile"],
-                required: true,
-            },
-            browser: {
-                type: String,
-                required: true,
-            },
-            ipAddress: {
-                type: String,
-                required: true,
-            },
-            pcName: {
-                type: String,
-            },
-            os: {
-                type: String,
-            },
-            userAgent: {
-                type: String,
-            },
-        },
-        lastLogin: {
-            type: Date,
-            default: Date.now,
+            enum: [UserRole.STUDENT, UserRole.TUTOR],
+            default: UserRole.STUDENT,
         },
         isActive: {
             type: Boolean,
             default: true,
-        },
-        otpToken: {
-            type: String,
-            default: null,
         },
     },
     {
@@ -88,13 +53,6 @@ userSchema.post("save", function (doc, next) {
     next();
 });
 
-userSchema.set("toJSON", {
-    transform: (_doc, ret) => {
-        delete ret.password;
-        return ret;
-    },
-});
-
 userSchema.statics.isPasswordMatched = async function (
     plainTextPassword,
     hashedPassword
@@ -106,7 +64,7 @@ userSchema.statics.isUserExistsByEmail = async function (email: string) {
     return await User.findOne({ email }).select("+password");
 };
 
-userSchema.statics.checkUserExist = async function (userId: string) {
+userSchema.statics.isUserExistsById = async function (userId: string) {
     const existingUser = await this.findById(userId);
 
     if (!existingUser) {

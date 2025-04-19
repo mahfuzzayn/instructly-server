@@ -1,28 +1,18 @@
-import { Document, Model } from "mongoose";
+import { Model, Types } from "mongoose";
+import { ITutor } from "../tutor/tutor.interface";
 
 export enum UserRole {
-    ADMIN = "admin",
-    USER = "user",
+    STUDENT = "student",
     TUTOR = "tutor",
 }
 
-export interface IUser extends Document {
+export interface IUser extends Partial<ITutor> {
+    _id: Types.ObjectId;
     email: string;
-    password: string;
     name: string;
+    password: string;
     role: UserRole;
-    isTutor: boolean;
-    clientInfo: {
-        device: "pc" | "mobile";
-        browser: string;
-        ipAddress: string;
-        pcName?: string;
-        os?: string;
-        userAgent?: string;
-    };
-    lastLogin: Date;
     isActive: boolean;
-    otpToken?: string | null;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -33,5 +23,5 @@ export interface UserModel extends Model<IUser> {
         hashedPassword: string
     ): Promise<boolean>;
     isUserExistsByEmail(id: string): Promise<IUser>;
-    checkUserExist(userId: string): Promise<IUser>;
+    isUserExistsById(userId: string): Promise<IUser>;
 }
