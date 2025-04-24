@@ -17,4 +17,10 @@ router.patch(
     BookingController.changeBookingStatus
 );
 
+router.post(
+    "/:bookingId/pay",
+    auth(UserRole.STUDENT),
+    BookingController.initiatePayment
+);
+
 export const BookingRoutes = router;

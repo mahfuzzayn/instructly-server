@@ -35,7 +35,7 @@ const bookingSchema = new Schema<IBooking>(
         status: {
             type: String,
             enum: Object.values(IStatus),
-            default: IStatus.WAITING_FOR_PAYMENT,
+            default: IStatus.PENDING_APPROVAL,
         },
         paymentStatus: {
             type: String,

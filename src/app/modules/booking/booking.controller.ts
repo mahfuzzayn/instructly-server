@@ -35,4 +35,23 @@ const changeBookingStatus = catchAsync(async (req: Request, res: Response) => {
     });
 });
 
-export const BookingController = { createBooking, changeBookingStatus };
+const initiatePayment = catchAsync(async (req: Request, res: Response) => {
+    const { bookingId } = req.params;
+    const result = await BookingServices.initiatePaymentFromDB(
+        bookingId,
+        req.user as IJwtPayload
+    );
+
+    sendResponse(res, {
+        statusCode: StatusCodes.OK,
+        success: true,
+        message: "Booking payment initialized successfully!",
+        data: result,
+    });
+});
+
+export const BookingController = {
+    createBooking,
+    changeBookingStatus,
+    initiatePayment,
+};
