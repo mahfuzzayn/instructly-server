@@ -1,12 +1,11 @@
 import { Model, Types } from "mongoose";
-import { ITutor } from "../tutor/tutor.interface";
 
 export enum UserRole {
     STUDENT = "student",
     TUTOR = "tutor",
 }
 
-export interface IUser extends Partial<ITutor> {
+export interface IUser {
     _id: Types.ObjectId;
     email: string;
     name: string;

@@ -3,31 +3,34 @@ import { Types } from "mongoose";
 export interface ITutor {
     _id: Types.ObjectId;
     user: Types.ObjectId;
-    name: string;
-    email: string;
     bio: string;
-    phoneNumber?: string;
-    subjects: ISubject[];
     hourlyRate: number;
-    reviews: IReview[];
     profileUrl: string;
+    earnings: number;
+    subjects: Types.ObjectId[];
+    availability: IAvailability[];
+    reviews: Types.ObjectId[];
     createdAt: Date;
     updatedAt: Date;
 }
 
-export interface ISubject {
-    name: string;
-    gradeLevel: string;
-    category?: string;
-}
-
 export interface IAvailability {
-    day: string;
-    timeSlots: string[];
+    day:
+        | "Saturday"
+        | "Sunday"
+        | "Monday"
+        | "Tuesday"
+        | "Wednesday"
+        | "Thursday"
+        | "Friday";
+    startTime: string;
+    endTime: string;
 }
 
 export interface IReview {
+    _id: string;
     student: Types.ObjectId;
+    tutor: Types.ObjectId;
     rating: number;
     comment: string;
     createdAt: Date;

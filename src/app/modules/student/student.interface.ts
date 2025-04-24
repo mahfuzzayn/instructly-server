@@ -2,38 +2,35 @@ import { Types } from "mongoose";
 
 export interface IStudent {
     _id: Types.ObjectId;
-    name: string;
-    email: string;
-    bio?: string;
+    user: Types.ObjectId
+    bio: string;
     gradeLevel: string;
-    subjectsOfInterest: ISubject[];
-    bookingHistory: IBooking[];
-    reviewsGiven: IReview[];
+    subjectsOfInterest: Types.ObjectId[];
+    bookingHistory: Types.ObjectId[];
+    reviewsGiven: Types.ObjectId[];
     profileUrl: string;
     createdAt: Date;
     updatedAt: Date;
 }
 
-export interface ISubject {
-    id: string;
-    name: string;
-    gradeLevel: string;
-    category?: string;
-}
-
 export interface IBooking {
-    id: string;
-    tutorId: string;
+    _id: Types.ObjectId;
+    student: Types.ObjectId;
+    tutor: Types.ObjectId;
+    subject: Types.ObjectId;
     date: Date;
     duration: number;
     price: number;
-    status: "pending" | "completed" | "canceled";
-}
-
-export interface IReview {
-    id: string;
-    tutorId: string;
-    comment: string;
-    rating: number;
-    timestamp: Date;
+    status:
+        | "pending_approval"
+        | "waiting_for_payment"
+        | "confirmed"
+        | "completed"
+        | "canceled_by_tutor"
+        | "canceled_by_student"
+        | "completed";
+    paymentStatus: "pending" | "completed" | "canceled";
+    transactionId: string;
+    createdAt: Date;
+    updatedAt: Date;
 }

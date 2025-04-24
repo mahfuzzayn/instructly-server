@@ -1,3 +1,4 @@
+import { Types } from "mongoose";
 import { UserRole } from "../user/user.interface";
 
 export interface IAuth {
@@ -6,7 +7,7 @@ export interface IAuth {
 }
 
 export interface IJwtPayload {
-    userId: string;
+    userId: Types.ObjectId;
     name: string;
     email: string;
     role: UserRole;

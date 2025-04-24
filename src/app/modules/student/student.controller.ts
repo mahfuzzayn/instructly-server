@@ -14,6 +14,6 @@ const registerStudent = catchAsync(async (req, res) => {
     });
 });
 
-export const StudentControllers = {
+export const StudentController = {
     registerStudent,
 };

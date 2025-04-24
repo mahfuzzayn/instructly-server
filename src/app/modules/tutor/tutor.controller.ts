@@ -14,6 +14,6 @@ const registerTutor = catchAsync(async (req, res) => {
     });
 });
 
-export const TutorControllers = {
+export const TutorController = {
     registerTutor,
 };

@@ -1,26 +1,44 @@
-import { Schema, model, Document, Types, Mongoose } from "mongoose";
-import { IReview, ISubject, ITutor } from "./tutor.interface";
+import { Schema, model } from "mongoose";
+import { ITutor } from "./tutor.interface";
 
-const subjectSchema = new Schema<ISubject>({
-    name: { type: String, required: true },
-    gradeLevel: { type: String, required: true },
-    category: { type: String },
-});
+const availabilitySchema = {
+    day: {
+        type: String,
+        enum: [
+            "Saturday",
+            "Sunday",
+            "Monday",
+            "Tuesday",
+            "Wednesday",
+            "Thursday",
+            "Friday",
+        ],
+    },
+    startTime: {
+        type: String,
+        required: true,
+    },
+    endTime: {
+        type: String,
+        required: true,
+    },
+};
 
 const tutorSchema = new Schema<ITutor>(
     {
-        name: { type: String, required: true },
-        email: { type: String, unique: true, required: true },
         user: { type: Schema.Types.ObjectId, ref: "User", required: true },
         bio: { type: String, default: null },
-        phoneNumber: { type: String },
-        subjects: { type: [subjectSchema], default: [] },
         hourlyRate: { type: Number, default: null },
+        earnings: { type: Number, default: null },
+        subjects: { type: [Schema.Types.ObjectId], default: [] },
+        availability: { type: [availabilitySchema], default: [] },
+        reviews: { type: [Schema.Types.ObjectId], default: [] },
         profileUrl: {
             type: String,
             default: null,
             validate: {
                 validator: function (v: string) {
+                    if (!v) return true;
                     return /^(http(s)?:\/\/.*\.(?:png|jpg|jpeg))/.test(v);
                 },
                 message: "Invalid photo URL format.",
