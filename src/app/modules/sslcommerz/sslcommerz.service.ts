@@ -26,7 +26,7 @@ const validatePaymentService = async (tran_id: string) => {
             tran_id,
         });
 
-        console.log(validationResponse.element);
+        // console.log(validationResponse.element);
 
         let data: {
             status: "pending" | "completed" | "canceled";
@@ -77,8 +77,13 @@ const validatePaymentService = async (tran_id: string) => {
             throw new AppError(StatusCodes.NOT_FOUND, "Tutor not found!");
         }
 
-        tutor.earnings += booking.price;
-        await tutor.save({ session });
+        if (
+            booking.status === IStatus.COMPLETED &&
+            booking.paymentStatus === "completed"
+        ) {
+            tutor.earnings += booking.price;
+            await tutor.save({ session });
+        }
 
         await session.commitTransaction();
 

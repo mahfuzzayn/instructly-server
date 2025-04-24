@@ -3,9 +3,17 @@ import { IBooking, IStatus } from "./booking.interface";
 
 const bookingSchema = new Schema<IBooking>(
     {
-        student: { type: Schema.Types.ObjectId, required: true },
-        tutor: { type: Schema.Types.ObjectId, required: true },
-        subject: { type: Schema.Types.ObjectId, required: true },
+        student: {
+            type: Schema.Types.ObjectId,
+            ref: "Student",
+            required: true,
+        },
+        tutor: { type: Schema.Types.ObjectId, ref: "Tutor", required: true },
+        subject: {
+            type: Schema.Types.ObjectId,
+            ref: "Subject",
+            required: true,
+        },
         date: {
             type: Date,
             required: true,

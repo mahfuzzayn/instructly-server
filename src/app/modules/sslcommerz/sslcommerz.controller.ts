@@ -8,8 +8,6 @@ const validatePaymentService = catchAsync(
         const tran_id = req.query.tran_id as string;
         const result = await SSLServices.validatePaymentService(tran_id);
 
-        console.log(result);
-
         if (result) {
             res.redirect(301, config.ssl.success_url as string);
         } else {

@@ -4,6 +4,7 @@ import { AuthRoutes } from "../modules/auth/auth.routes";
 import { SubjectRoutes } from "../modules/subject/subject.routes";
 import { BookingRoutes } from "../modules/booking/booking.routes";
 import { SSLRoutes } from "../modules/sslcommerz/sslcommerz.routes";
+import { ReviewRoutes } from "../modules/review/review.routes";
 const router = Router();
 
 const moduleRoutes = [
@@ -22,6 +23,10 @@ const moduleRoutes = [
     {
         path: "/bookings",
         route: BookingRoutes,
+    },
+    {
+        path: "/reviews",
+        route: ReviewRoutes,
     },
     {
         path: "/ssl",

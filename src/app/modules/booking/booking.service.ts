@@ -9,50 +9,70 @@ import { Student } from "../student/student.model";
 import { canChangeBookingStatus, generateTransactionId } from "./booking.utils";
 import config from "../../config";
 import SSLCommerzPayment from "sslcommerz-lts";
+import mongoose from "mongoose";
 
 const createBookingIntoDB = async (
     payload: IBooking,
     authUser: IJwtPayload
 ) => {
-    const isStudentExists = await Student.findOne({ user: authUser?.userId });
+    const session = await mongoose.startSession();
 
-    if (!isStudentExists) {
-        throw new AppError(StatusCodes.NOT_FOUND, "Student not found!");
-    }
+    try {
+        session.startTransaction();
 
-    const isTutorExists = await Tutor.findById(payload?.tutor);
+        const student = await Student.findOne({ user: authUser?.userId });
 
-    if (!isTutorExists) {
-        throw new AppError(StatusCodes.NOT_FOUND, "Tutor not found!");
-    }
+        if (!student) {
+            throw new AppError(StatusCodes.NOT_FOUND, "Student not found!");
+        }
 
-    if (!isTutorExists.hourlyRate || isTutorExists.hourlyRate <= 0) {
-        throw new AppError(
-            StatusCodes.BAD_REQUEST,
-            "Invalid hourly rate for the tutor!"
+        const isTutorExists = await Tutor.findById(payload?.tutor);
+
+        if (!isTutorExists) {
+            throw new AppError(StatusCodes.NOT_FOUND, "Tutor not found!");
+        }
+
+        if (!isTutorExists.hourlyRate || isTutorExists.hourlyRate <= 0) {
+            throw new AppError(
+                StatusCodes.BAD_REQUEST,
+                "Invalid hourly rate for the tutor!"
+            );
+        }
+
+        const isSubjectExists = await Subject.findById(payload?.subject);
+
+        if (!isSubjectExists) {
+            throw new AppError(StatusCodes.NOT_FOUND, "Subject not found!");
+        }
+
+        if (!payload.duration || payload.duration <= 0) {
+            throw new AppError(
+                StatusCodes.BAD_REQUEST,
+                "Invalid duration! Duration must be greater than 0."
+            );
+        }
+
+        payload.price = parseFloat(
+            String(isTutorExists?.hourlyRate * (payload.duration / 60))
         );
+
+        const bookingCreated = new Booking(payload);
+        await bookingCreated.save({ session });
+
+        // Store Created Booking to Student bookingHistory
+        student.bookingHistory.push(bookingCreated?._id);
+        await student.save({ session });
+
+        await session.commitTransaction();
+
+        return bookingCreated;
+    } catch (error) {
+        await session.abortTransaction();
+
+        console.log(error);
+    } finally {
+        await session.endSession();
     }
-
-    const isSubjectExists = await Subject.findById(payload?.subject);
-
-    if (!isSubjectExists) {
-        throw new AppError(StatusCodes.NOT_FOUND, "Subject not found!");
-    }
-
-    if (!payload.duration || payload.duration <= 0) {
-        throw new AppError(
-            StatusCodes.BAD_REQUEST,
-            "Invalid duration! Duration must be greater than 0."
-        );
-    }
-
-    payload.price = parseFloat(
-        String(isTutorExists?.hourlyRate * (payload.duration / 60))
-    );
-
-    const result = await Booking.create(payload);
-
-    return result;
 };
 
 const changeBookingStatusIntoDB = async (

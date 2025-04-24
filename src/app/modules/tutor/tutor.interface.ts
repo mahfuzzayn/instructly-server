@@ -26,13 +26,3 @@ export interface IAvailability {
     startTime: string;
     endTime: string;
 }
-
-export interface IReview {
-    _id: string;
-    student: Types.ObjectId;
-    tutor: Types.ObjectId;
-    rating: number;
-    comment: string;
-    createdAt: Date;
-    updatedAt: Date;
-}
