@@ -3,7 +3,7 @@ import { GradeLevel, ISubject, SubjectCategory } from "./subject.interface";
 
 const subjectSchema = new Schema<ISubject>(
     {
-        tutor: { type: Schema.Types.ObjectId, required: true },
+        tutor: { type: Schema.Types.ObjectId, ref: "Tutor", required: true },
         name: { type: String, required: true },
         gradeLevel: {
             type: String,
