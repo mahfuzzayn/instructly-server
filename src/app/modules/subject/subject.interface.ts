@@ -14,6 +14,8 @@ export enum SubjectCategory {
     MATH = "Math",
     LANGUAGE = "Language",
     TECHNOLOGY = "Technology",
+    PROGRAMMING = "Programming",
+    AI = "Ai",
     ARTS = "Arts",
     SPORTS = "Sports",
     OTHER = "Other",

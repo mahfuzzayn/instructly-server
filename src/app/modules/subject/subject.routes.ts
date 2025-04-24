@@ -11,4 +11,28 @@ router.post(
     SubjectController.createSubject
 );
 
+router.get(
+    "/:subjectId",
+    auth(UserRole.TUTOR, UserRole.STUDENT),
+    SubjectController.getSingleSubject
+);
+
+router.get(
+    "/",
+    auth(UserRole.TUTOR, UserRole.STUDENT),
+    SubjectController.getAllSubjects
+);
+
+router.patch(
+    "/:subjectId",
+    auth(UserRole.TUTOR),
+    SubjectController.updateSubject
+);
+
+router.delete(
+    "/:subjectId",
+    auth(UserRole.TUTOR),
+    SubjectController.deleteSubject
+);
+
 export const SubjectRoutes = router;
