@@ -9,7 +9,13 @@ import notFound from "./app/middleware/notFound";
 const app: Application = express();
 
 // Middlewares
-app.use(cors({ origin: "http://localhost:3000" }));
+app.use(
+    cors({
+        origin: ["http://localhost:3000", "https://instructly.vercel.app"],
+        methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
+        credentials: true,
+    })
+);
 app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));

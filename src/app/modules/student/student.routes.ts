@@ -1,9 +1,9 @@
 import { Router } from 'express';
-import { studentController } from './student.controller';
+import { StudentController } from './student.controller';
 
 const router = Router();
 
 // Define routes
-router.get('/', studentController.getAll);
+// router.get('/', StudentController.getAll);
 
 export default router;

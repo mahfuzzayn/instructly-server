@@ -5,14 +5,37 @@ import { StatusCodes } from "http-status-codes";
 import catchAsync from "../../utils/catchAsync";
 import { IImageFile } from "../../interface/IImageFile";
 import { IJwtPayload } from "../auth/auth.interface";
+import config from "../../config";
 
 const registerUser = catchAsync(async (req: Request, res: Response) => {
     const result = await UserServices.registerUserIntoDB(req.body);
+
+    const { refreshToken, accessToken } = result;
+
+    res.cookie("refreshToken", refreshToken, {
+        secure: config.NODE_ENV === "production",
+        httpOnly: true,
+        sameSite: "none",
+        maxAge: 1000 * 60 * 60 * 24 * 365,
+    });
 
     sendResponse(res, {
         statusCode: StatusCodes.OK,
         success: true,
         message: "User registration completed successfully!",
+        data: {
+            accessToken,
+        },
+    });
+});
+
+const getMe = catchAsync(async (req: Request, res: Response) => {
+    const result = await UserServices.getMeFromDB(req.user as IJwtPayload);
+
+    sendResponse(res, {
+        statusCode: StatusCodes.OK,
+        success: true,
+        message: "User information retrieved successfully!",
         data: result,
     });
 });
@@ -50,6 +73,7 @@ const updateTutorProfile = catchAsync(async (req: Request, res: Response) => {
 
 export const UserController = {
     registerUser,
+    getMe,
     updateStudentProfile,
     updateTutorProfile,
 };

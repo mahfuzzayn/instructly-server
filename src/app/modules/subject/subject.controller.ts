@@ -3,6 +3,7 @@ import sendResponse from "../../utils/sendResponse";
 import catchAsync from "../../utils/catchAsync";
 import { SubjectServices } from "./subject.service";
 import { Request, Response } from "express";
+import { IJwtPayload } from "../auth/auth.interface";
 
 const createSubject = catchAsync(async (req: Request, res: Response) => {
     const result = await SubjectServices.createSubjectIntoDB(req.body);
@@ -38,6 +39,19 @@ const getAllSubjects = catchAsync(async (req: Request, res: Response) => {
     });
 });
 
+const getMySubjects = catchAsync(async (req: Request, res: Response) => {
+    const result = await SubjectServices.getMySubjectsFromDB(
+        req.user as IJwtPayload
+    );
+
+    sendResponse(res, {
+        statusCode: StatusCodes.OK,
+        success: true,
+        message: "Subjects retrieved successfully!",
+        data: result,
+    });
+});
+
 const updateSubject = catchAsync(async (req: Request, res: Response) => {
     const { subjectId } = req.params;
     const result = await SubjectServices.updateSubjectIntoDB(
@@ -53,14 +67,14 @@ const updateSubject = catchAsync(async (req: Request, res: Response) => {
     });
 });
 
-const deleteSubject = catchAsync(async (req: Request, res: Response) => {
+const discontinueSubject = catchAsync(async (req: Request, res: Response) => {
     const { subjectId } = req.params;
-    const result = await SubjectServices.deleteSubjectFromDB(subjectId);
+    const result = await SubjectServices.discontinueSubjectFromDB(subjectId);
 
     sendResponse(res, {
         statusCode: StatusCodes.OK,
         success: true,
-        message: "Subject deleted successfully!",
+        message: "Subject status changed to discontinued successfully!",
         data: result,
     });
 });
@@ -69,6 +83,7 @@ export const SubjectController = {
     createSubject,
     getSingleSubject,
     getAllSubjects,
+    getMySubjects,
     updateSubject,
-    deleteSubject,
+    discontinueSubject,
 };

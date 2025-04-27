@@ -1,5 +1,10 @@
 import { Schema, model } from "mongoose";
-import { GradeLevel, ISubject, SubjectCategory } from "./subject.interface";
+import {
+    GradeLevel,
+    ISubject,
+    SubjectCategory,
+    SubjectStatus,
+} from "./subject.interface";
 
 const subjectSchema = new Schema<ISubject>(
     {
@@ -14,6 +19,11 @@ const subjectSchema = new Schema<ISubject>(
             type: String,
             enum: Object.values(SubjectCategory),
             required: true,
+        },
+        status: {
+            type: String,
+            enum: Object.values(SubjectStatus),
+            default: SubjectStatus.ACTIVE,
         },
     },
     {

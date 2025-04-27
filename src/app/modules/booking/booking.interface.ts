@@ -1,4 +1,5 @@
 import { Types } from "mongoose";
+import { DaysOfWeek } from "../tutor/tutor.interface";
 
 export enum IStatus {
     PENDING_APPROVAL = "pending_approval", // Default
@@ -13,13 +14,21 @@ export interface IBooking {
     _id: Types.ObjectId;
     student: Types.ObjectId;
     tutor: Types.ObjectId;
-    subject: Types.ObjectId;
     date: Date;
-    duration: number;
+    totalHours: number;
+    months: number;
+    timeSlots: IAvailability[];
     price: number;
     status: IStatus;
     paymentStatus: "pending" | "completed" | "canceled";
     transactionId: string;
     createdAt: Date;
     updatedAt: Date;
+}
+
+export interface IAvailability {
+    day: DaysOfWeek;
+    startTime: string;
+    endTime: string;
+    totalHours: number;
 }

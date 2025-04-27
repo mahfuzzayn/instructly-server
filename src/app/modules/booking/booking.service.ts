@@ -2,14 +2,14 @@ import { StatusCodes } from "http-status-codes";
 import AppError from "../../errors/appError";
 import { IJwtPayload } from "../auth/auth.interface";
 import Tutor from "../tutor/tutor.model";
-import { IBooking, IStatus } from "./booking.interface";
+import { IAvailability, IBooking, IStatus } from "./booking.interface";
 import Booking from "./booking.model";
-import Subject from "../subject/subject.model";
 import { Student } from "../student/student.model";
 import { canChangeBookingStatus, generateTransactionId } from "./booking.utils";
 import config from "../../config";
 import SSLCommerzPayment from "sslcommerz-lts";
 import mongoose from "mongoose";
+import moment from "moment";
 
 const createBookingIntoDB = async (
     payload: IBooking,
@@ -26,40 +26,92 @@ const createBookingIntoDB = async (
             throw new AppError(StatusCodes.NOT_FOUND, "Student not found!");
         }
 
-        const isTutorExists = await Tutor.findById(payload?.tutor);
+        const tutor = await Tutor.findById(payload?.tutor);
 
-        if (!isTutorExists) {
+        if (!tutor) {
             throw new AppError(StatusCodes.NOT_FOUND, "Tutor not found!");
         }
 
-        if (!isTutorExists.hourlyRate || isTutorExists.hourlyRate <= 0) {
+        if (!tutor.hourlyRate || tutor.hourlyRate <= 0) {
             throw new AppError(
                 StatusCodes.BAD_REQUEST,
                 "Invalid hourly rate for the tutor!"
             );
         }
 
-        const isSubjectExists = await Subject.findById(payload?.subject);
-
-        if (!isSubjectExists) {
-            throw new AppError(StatusCodes.NOT_FOUND, "Subject not found!");
-        }
-
-        if (!payload.duration || payload.duration <= 0) {
+        if (!payload.timeSlots || payload.timeSlots.length <= 0) {
             throw new AppError(
                 StatusCodes.BAD_REQUEST,
-                "Invalid duration! Duration must be greater than 0."
+                "Time slots are required!"
             );
         }
 
-        payload.price = parseFloat(
-            String(isTutorExists?.hourlyRate * (payload.duration / 60))
+        const tutorAvailability = tutor.availability;
+
+        const availabilityTimes = payload.timeSlots.map(
+            (slotId: IAvailability) => {
+                const slot = tutorAvailability.find(
+                    (availability) =>
+                        availability._id.toString() === slotId.toString()
+                );
+
+                if (slot) {
+                    return {
+                        startTime: slot.startTime,
+                        endTime: slot.endTime,
+                        day: slot.day,
+                        totalHours: slot.totalHours,
+                    };
+                }
+
+                throw new AppError(
+                    StatusCodes.NOT_FOUND,
+                    `Time slot with ID ${slotId} not found in tutor availability!`
+                );
+            }
         );
 
+        const weeklyHours = availabilityTimes.reduce((total: number, slot) => {
+            const start = moment(slot.startTime, "HH:mm");
+            const end = moment(slot.endTime, "HH:mm");
+            const durationInHours = end.diff(start, "minutes") / 60;
+            return total + durationInHours;
+        }, 0);
+
+        if (weeklyHours <= 0) {
+            throw new AppError(
+                StatusCodes.BAD_REQUEST,
+                "Total time for the booking is invalid!"
+            );
+        }
+
+        const totalHoursPerMonth = weeklyHours * 4;
+        const months = payload.months || 0;
+
+        if (months <= 0) {
+            throw new AppError(
+                StatusCodes.BAD_REQUEST,
+                "Months for the booking is invalid!"
+            );
+        }
+
+        const totalHours = totalHoursPerMonth * months;
+
+        if (totalHours <= 0) {
+            throw new AppError(
+                StatusCodes.BAD_REQUEST,
+                "Total hours for the booking is invalid!"
+            );
+        }
+
+        payload.totalHours = totalHours;
+        payload.price = parseFloat(String(tutor?.hourlyRate * totalHours));
+        payload.timeSlots = availabilityTimes;
+
         const bookingCreated = new Booking(payload);
+        bookingCreated.student = student?._id;
         await bookingCreated.save({ session });
 
-        // Store Created Booking to Student bookingHistory
         student.bookingHistory.push(bookingCreated?._id);
         await student.save({ session });
 
@@ -68,11 +120,67 @@ const createBookingIntoDB = async (
         return bookingCreated;
     } catch (error) {
         await session.abortTransaction();
-
         console.log(error);
+        throw new AppError(
+            StatusCodes.INTERNAL_SERVER_ERROR,
+            "Error occurred while creating booking."
+        );
     } finally {
         await session.endSession();
     }
+};
+
+const getSingleBookingFromDB = async (id: string) => {
+    const booking = await Booking.findById(id);
+
+    if (!booking) {
+        throw new AppError(
+            StatusCodes.NOT_FOUND,
+            "No booking found by the provided id!"
+        );
+    }
+
+    return booking;
+};
+
+const getMyBookingsFromDB = async (authUser: IJwtPayload) => {
+    if (authUser?.role === "tutor") {
+        const tutor = await Tutor.findOne({ user: authUser?.userId });
+
+        if (!tutor) {
+            throw new AppError(StatusCodes.NOT_FOUND, "Tutor not found!");
+        }
+
+        const bookings = await Booking.find({ tutor: tutor?._id });
+
+        if (!bookings) {
+            throw new AppError(
+                StatusCodes.NOT_FOUND,
+                "You don't have any bookings yet!"
+            );
+        }
+
+        return bookings;
+    } else if (authUser?.role === "student") {
+        const student = await Student.findOne({ user: authUser?.userId });
+
+        if (!student) {
+            throw new AppError(StatusCodes.NOT_FOUND, "Student not found!");
+        }
+
+        const bookings = await Booking.find({ student: student?._id });
+
+        if (!bookings) {
+            throw new AppError(
+                StatusCodes.NOT_FOUND,
+                "You didn't made any bookings yet!"
+            );
+        }
+
+        return bookings;
+    }
+
+    return null;
 };
 
 const changeBookingStatusIntoDB = async (
@@ -233,6 +341,8 @@ const initiatePaymentFromDB = async (
 
 export const BookingServices = {
     createBookingIntoDB,
+    getSingleBookingFromDB,
+    getMyBookingsFromDB,
     changeBookingStatusIntoDB,
     initiatePaymentFromDB,
 };

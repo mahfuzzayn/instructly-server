@@ -11,6 +11,18 @@ router.post(
     BookingController.createBooking
 );
 
+router.get(
+    "/:bookingId",
+    auth(UserRole.STUDENT, UserRole.TUTOR),
+    BookingController.getSingleBooking
+);
+
+router.get(
+    "/",
+    auth(UserRole.STUDENT, UserRole.TUTOR),
+    BookingController.getMyBookings
+);
+
 router.patch(
     "/change-status/:bookingId",
     auth(UserRole.STUDENT, UserRole.TUTOR),

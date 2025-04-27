@@ -9,13 +9,20 @@ import { parseBody } from "../../middleware/bodyParse";
 
 const router = Router();
 
-router.post("/register-user", UserController.registerUser);
+router.post(
+    "/register-user",
+    validateRequest(UserValidation.registerUserValidationSchema),
+    UserController.registerUser
+);
+
+router.get("/me", auth(UserRole.STUDENT, UserRole.TUTOR), UserController.getMe);
 
 router.patch(
     "/student/update-profile",
     auth(UserRole.STUDENT),
     multerUpload.single("image"),
     parseBody,
+    validateRequest(UserValidation.updateStudentProfileValidationSchema),
     UserController.updateStudentProfile
 );
 
@@ -24,6 +31,7 @@ router.patch(
     auth(UserRole.TUTOR),
     multerUpload.single("image"),
     parseBody,
+    validateRequest(UserValidation.updateTutorProfileValidationSchema),
     UserController.updateTutorProfile
 );
 

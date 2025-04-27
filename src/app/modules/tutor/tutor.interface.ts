@@ -15,14 +15,19 @@ export interface ITutor {
 }
 
 export interface IAvailability {
-    day:
-        | "Saturday"
-        | "Sunday"
-        | "Monday"
-        | "Tuesday"
-        | "Wednesday"
-        | "Thursday"
-        | "Friday";
+    _id: Types.ObjectId;
+    day: DaysOfWeek;
     startTime: string;
     endTime: string;
+    totalHours: number;
+}
+
+export enum DaysOfWeek {
+    Saturday = "Saturday",
+    Sunday = "Sunday",
+    Monday = "Monday",
+    Tuesday = "Tuesday",
+    Wednesday = "Wednesday",
+    Thursday = "Thursday",
+    Friday = "Friday",
 }

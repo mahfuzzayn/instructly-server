@@ -1,6 +1,25 @@
 import { Schema, model } from "mongoose";
 import { IBooking, IStatus } from "./booking.interface";
 
+const availabilitySchema = {
+    day: {
+        type: String,
+        required: true,
+    },
+    startTime: {
+        type: String,
+        required: true,
+    },
+    endTime: {
+        type: String,
+        required: true,
+    },
+    totalHours: {
+        type: Number,
+        required: true,
+    },
+};
+
 const bookingSchema = new Schema<IBooking>(
     {
         student: {
@@ -9,11 +28,6 @@ const bookingSchema = new Schema<IBooking>(
             required: true,
         },
         tutor: { type: Schema.Types.ObjectId, ref: "Tutor", required: true },
-        subject: {
-            type: Schema.Types.ObjectId,
-            ref: "Subject",
-            required: true,
-        },
         date: {
             type: Date,
             required: true,
@@ -24,11 +38,19 @@ const bookingSchema = new Schema<IBooking>(
                 message: "Booking date must be in the future.",
             },
         },
-        duration: {
+        timeSlots: {
+            type: [availabilitySchema],
+            required: true,
+        },
+        totalHours: {
             type: Number,
             required: true,
-            min: [30, "Duration must be at least 30 minutes."],
-            max: [240, "Duration cannot exceed 4 hours (240 minutes)."],
+            min: [0, "Duration must be at least 1 minutes."],
+        },
+        months: {
+            type: Number,
+            required: true,
+            min: [0, "Months must be at least 1."],
         },
         price: {
             type: Number,

@@ -1,24 +1,101 @@
 import { StatusCodes } from "http-status-codes";
 import AppError from "../../errors/appError";
-import { ISubject } from "./subject.interface";
+import { ISubject, SubjectStatus } from "./subject.interface";
 import Subject from "./subject.model";
+import mongoose from "mongoose";
+import Tutor from "../tutor/tutor.model";
+import { IJwtPayload } from "../auth/auth.interface";
 
 const createSubjectIntoDB = async (payload: ISubject) => {
-    const result = await Subject.create(payload);
+    const session = await mongoose.startSession();
 
-    return result;
+    try {
+        session.startTransaction();
+
+        const tutor = await Tutor.findById(payload?.tutor).session(session);
+
+        if (!tutor) {
+            throw new AppError(StatusCodes.NOT_FOUND, "Tutor not found!");
+        }
+
+        const existingSubject = await Subject.findOne({
+            tutor: payload.tutor,
+            name: payload.name,
+        }).session(session);
+
+        if (existingSubject) {
+            throw new AppError(
+                StatusCodes.BAD_REQUEST,
+                "Subject already exists!"
+            );
+        }
+
+        const subjectCreated = new Subject(payload);
+        await subjectCreated.save({ session });
+
+        tutor.subjects.push(subjectCreated._id);
+        await tutor.save({ session });
+
+        await session.commitTransaction();
+
+        return subjectCreated;
+    } catch (error) {
+        await session.abortTransaction();
+        // console.error("Error during subject creation:", error);
+
+        throw new AppError(StatusCodes.INTERNAL_SERVER_ERROR, error as any);
+    } finally {
+        await session.endSession();
+    }
 };
 
 const getSingleSubjectFromDB = async (id: string) => {
-    const result = await Subject.findById(id);
+    const subject = await Subject.findById(id);
 
-    return result;
+    if (!subject) {
+        throw new AppError(StatusCodes.NOT_FOUND, "Subject not found!");
+    }
+
+    if (subject.status === SubjectStatus.DISCONTINUED) {
+        throw new AppError(
+            StatusCodes.NOT_FOUND,
+            "Subject has been discontinued!"
+        );
+    }
+
+    return subject;
 };
 
 const getAllSubjectsFromDB = async () => {
-    const result = await Subject.find();
+    const subjects = await Subject.find({status: SubjectStatus.ACTIVE});
 
-    return result;
+    if (!subjects) {
+        throw new AppError(StatusCodes.NOT_FOUND, "No subjects were found!");
+    }
+
+    return subjects;
+};
+
+const getMySubjectsFromDB = async (authUser: IJwtPayload) => {
+    const tutor = await Tutor.findOne({ user: authUser?.userId });
+
+    if (!tutor) {
+        throw new AppError(StatusCodes.NOT_FOUND, "Tutor not found!");
+    }
+
+    const subjects = await Subject.find({
+        tutor: tutor?._id,
+        status: SubjectStatus.ACTIVE,
+    });
+
+    if (!subjects) {
+        throw new AppError(
+            StatusCodes.NOT_FOUND,
+            "You don't have any subjects!"
+        );
+    }
+
+    return subjects;
 };
 
 const updateSubjectIntoDB = async (id: string, payload: Partial<ISubject>) => {
@@ -35,14 +112,22 @@ const updateSubjectIntoDB = async (id: string, payload: Partial<ISubject>) => {
     return result;
 };
 
-const deleteSubjectFromDB = async (id: string) => {
+const discontinueSubjectFromDB = async (id: string) => {
     const isSubjectExists = await Subject.findById(id);
 
     if (!isSubjectExists) {
         throw new AppError(StatusCodes.NOT_FOUND, "Subject not found!");
     }
 
-    const result = await Subject.findByIdAndDelete(id);
+    const result = await Subject.findByIdAndUpdate(
+        id,
+        {
+            status: SubjectStatus.DISCONTINUED,
+        },
+        {
+            new: true,
+        }
+    );
 
     return result;
 };
@@ -51,6 +136,7 @@ export const SubjectServices = {
     createSubjectIntoDB,
     getSingleSubjectFromDB,
     getAllSubjectsFromDB,
+    getMySubjectsFromDB,
     updateSubjectIntoDB,
-    deleteSubjectFromDB,
+    discontinueSubjectFromDB,
 };

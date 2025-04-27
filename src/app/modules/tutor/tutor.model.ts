@@ -1,18 +1,11 @@
 import { Schema, model } from "mongoose";
-import { ITutor } from "./tutor.interface";
+import { DaysOfWeek, ITutor } from "./tutor.interface";
 
 const availabilitySchema = {
     day: {
         type: String,
-        enum: [
-            "Saturday",
-            "Sunday",
-            "Monday",
-            "Tuesday",
-            "Wednesday",
-            "Thursday",
-            "Friday",
-        ],
+        enum: Object.values(DaysOfWeek),
+        required: true,
     },
     startTime: {
         type: String,
@@ -20,6 +13,10 @@ const availabilitySchema = {
     },
     endTime: {
         type: String,
+        required: true,
+    },
+    totalHours: {
+        type: Number,
         required: true,
     },
 };

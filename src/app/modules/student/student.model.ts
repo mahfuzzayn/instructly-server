@@ -6,9 +6,21 @@ const StudentSchema = new Schema<IStudent>(
         user: { type: Schema.Types.ObjectId, ref: "User", required: true },
         bio: { type: String, default: null },
         gradeLevel: { type: String, default: null },
-        subjectsOfInterest: { type: [Schema.Types.ObjectId], default: [] },
-        bookingHistory: { type: [Schema.Types.ObjectId], default: [] },
-        reviewsGiven: { type: [Schema.Types.ObjectId], default: [] },
+        subjectsOfInterest: {
+            type: [Schema.Types.ObjectId],
+            ref: "Subject",
+            default: [],
+        },
+        bookingHistory: {
+            type: [Schema.Types.ObjectId],
+            ref: "Booking",
+            default: [],
+        },
+        reviewsGiven: {
+            type: [Schema.Types.ObjectId],
+            ref: "Review",
+            default: [],
+        },
         profileUrl: {
             type: String,
             default: null,

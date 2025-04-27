@@ -1,5 +1,10 @@
 import { Types } from "mongoose";
 
+export enum SubjectStatus {
+    ACTIVE = "active",
+    DISCONTINUED = "discontinued",
+}
+
 export enum GradeLevel {
     PRIMARY = "Primary",
     SECONDARY = "Secondary",
@@ -27,6 +32,7 @@ export interface ISubject {
     name: string;
     gradeLevel: GradeLevel;
     category: SubjectCategory;
+    status: SubjectStatus;
     createdAt: Date;
     updatedAt: Date;
 }
