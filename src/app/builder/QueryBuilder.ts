@@ -64,7 +64,7 @@ class QueryBuilder<T> {
         this.modelQuery = this.modelQuery.select(fields);
         return this;
     }
-
+    
     async countTotal() {
         const totalQueries = this.modelQuery.getFilter();
         const total = await this.modelQuery.model.countDocuments(totalQueries);
@@ -87,7 +87,7 @@ class QueryBuilder<T> {
 
         if (minPrice !== undefined || maxPrice !== undefined) {
             this.modelQuery = this.modelQuery.find({
-                price: priceFilter,
+                hourlyRate: priceFilter,
             } as FilterQuery<T>);
         }
 

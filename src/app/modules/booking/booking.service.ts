@@ -114,6 +114,8 @@ const createBookingIntoDB = async (
 
         student.bookingHistory.push(bookingCreated?._id);
         await student.save({ session });
+        tutor.bookings.push(bookingCreated?._id);
+        await tutor.save({ session });
 
         await session.commitTransaction();
 

@@ -5,6 +5,7 @@ import Subject from "./subject.model";
 import mongoose from "mongoose";
 import Tutor from "../tutor/tutor.model";
 import { IJwtPayload } from "../auth/auth.interface";
+import QueryBuilder from "../../builder/QueryBuilder";
 
 const createSubjectIntoDB = async (payload: ISubject) => {
     const session = await mongoose.startSession();
@@ -66,27 +67,47 @@ const getSingleSubjectFromDB = async (id: string) => {
     return subject;
 };
 
-const getAllSubjectsFromDB = async () => {
-    const subjects = await Subject.find({status: SubjectStatus.ACTIVE});
+const getAllSubjectsFromDB = async (query: Record<string, unknown>) => {
+    const subjectsQuery = new QueryBuilder(
+        Subject.find({ status: SubjectStatus.ACTIVE }).populate("tutor"),
+        query
+    );
+
+    const subjects = await subjectsQuery.modelQuery;
+
+    const meta = await subjectsQuery.countTotal();
 
     if (!subjects) {
         throw new AppError(StatusCodes.NOT_FOUND, "No subjects were found!");
     }
 
-    return subjects;
+    return {
+        meta,
+        result: subjects,
+    };
 };
 
-const getMySubjectsFromDB = async (authUser: IJwtPayload) => {
+const getMySubjectsFromDB = async (
+    authUser: IJwtPayload,
+    query: Record<string, unknown>
+) => {
     const tutor = await Tutor.findOne({ user: authUser?.userId });
 
     if (!tutor) {
         throw new AppError(StatusCodes.NOT_FOUND, "Tutor not found!");
     }
 
-    const subjects = await Subject.find({
-        tutor: tutor?._id,
-        status: SubjectStatus.ACTIVE,
-    });
+    const subjectsQuery = new QueryBuilder(
+        Subject.find({
+            tutor: tutor?._id,
+            status: SubjectStatus.ACTIVE,
+        }).populate("tutor"),
+        query
+    ).paginate();
+
+    const subjects = await subjectsQuery.modelQuery;
+
+    const meta = await subjectsQuery.countTotal();
 
     if (!subjects) {
         throw new AppError(
@@ -95,7 +116,10 @@ const getMySubjectsFromDB = async (authUser: IJwtPayload) => {
         );
     }
 
-    return subjects;
+    return {
+        meta,
+        result: subjects,
+    };
 };
 
 const updateSubjectIntoDB = async (id: string, payload: Partial<ISubject>) => {

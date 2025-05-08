@@ -93,7 +93,9 @@ const getMeFromDB = async (authUser: IJwtPayload) => {
     }
 
     if (user?.role === "tutor") {
-        const tutor = await Tutor.findOne({ user: user?._id });
+        const tutor = await Tutor.findOne({ user: user?._id }).populate(
+            "user subjects reviews bookings"
+        );
 
         if (!tutor) {
             throw new AppError(StatusCodes.NOT_FOUND, "Tutor not found!");
@@ -102,7 +104,7 @@ const getMeFromDB = async (authUser: IJwtPayload) => {
         return tutor;
     } else if (user?.role === "student") {
         const student = await Student.findOne({ user: user?._id }).populate(
-            "subjectsOfInterest bookingHistory reviewsGiven"
+            "user subjectsOfInterest bookingHistory reviewsGiven"
         );
 
         if (!student) {
@@ -155,8 +157,8 @@ const updateStudentProfileIntoDB = async (
             );
         }
 
-        updatedData.$addToSet = {
-            subjectsOfInterest: { $each: validSubjects.map((s) => s._id) },
+        updatedData.$set = {
+            subjectsOfInterest: validSubjects.map((s) => s._id),
         };
     }
 

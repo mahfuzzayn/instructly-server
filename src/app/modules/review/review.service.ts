@@ -6,6 +6,30 @@ import AppError from "../../errors/appError";
 import { StatusCodes } from "http-status-codes";
 import Tutor from "../tutor/tutor.model";
 
+const calculateTutorAverageReview = async (tutorId: Types.ObjectId) => {
+    const result = await Review.aggregate([
+        {
+            $match: { tutor: new mongoose.Types.ObjectId(tutorId) },
+        },
+        {
+            $group: {
+                _id: null,
+                averageRating: { $avg: "$rating" },
+                reviewCount: { $sum: 1 },
+            },
+        },
+    ]);
+
+    if (result.length === 0) {
+        return { averageRating: 0, reviewCount: 0 };
+    }
+
+    return {
+        averageRating: result[0].averageRating.toFixed(1) || 0,
+        reviewCount: result[0].reviewCount || 0,
+    };
+};
+
 const giveReviewIntoDB = async (payload: IReview) => {
     const session = await mongoose.startSession();
 
@@ -30,6 +54,9 @@ const giveReviewIntoDB = async (payload: IReview) => {
         student.reviewsGiven.push(reviewCreated?._id);
         await student.save({ session });
 
+        const { averageRating } = await calculateTutorAverageReview(tutor?._id);
+
+        tutor.averageRating = averageRating;
         tutor.reviews.push(reviewCreated?._id);
         await tutor.save({ session });
 

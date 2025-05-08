@@ -14,6 +14,32 @@ const registerTutor = catchAsync(async (req, res) => {
     });
 });
 
+const getAllTutors = catchAsync(async (req, res) => {
+    const result = await TutorServices.getAllTutorsFromDB(req.query);
+
+    sendResponse(res, {
+        statusCode: StatusCodes.OK,
+        success: true,
+        message: "Tutors retrieved successfully!",
+        meta: result.meta,
+        data: result.result,
+    });
+});
+
+const getSingleTutor = catchAsync(async (req, res) => {
+    const { tutorId } = req.params;
+    const result = await TutorServices.getSingleTutorFromDB(tutorId);
+
+    sendResponse(res, {
+        statusCode: StatusCodes.OK,
+        success: true,
+        message: "Tutor retrieved successfully!",
+        data: result,
+    });
+});
+
 export const TutorController = {
     registerTutor,
+    getAllTutors,
+    getSingleTutor,
 };

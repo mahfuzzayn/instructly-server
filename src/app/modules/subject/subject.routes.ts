@@ -19,13 +19,11 @@ router.get(
 
 router.get(
     "/:subjectId",
-    auth(UserRole.TUTOR, UserRole.STUDENT),
     SubjectController.getSingleSubject
 );
 
 router.get(
     "/",
-    auth(UserRole.TUTOR, UserRole.STUDENT),
     SubjectController.getAllSubjects
 );
 

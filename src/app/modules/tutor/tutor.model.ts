@@ -27,12 +27,20 @@ const tutorSchema = new Schema<ITutor>(
         bio: { type: String, default: null },
         hourlyRate: { type: Number, default: null },
         earnings: { type: Number, default: null },
+        averageRating: { type: Number, default: 0 },
+        location: { type: String, default: null },
         subjects: {
             type: [Schema.Types.ObjectId],
             ref: "Subject",
             default: [],
         },
         availability: { type: [availabilitySchema], default: [] },
+        bookings: {
+            type: [Schema.Types.ObjectId],
+            ref: "Booking",
+            select: false,
+            default: [],
+        },
         reviews: { type: [Schema.Types.ObjectId], ref: "Review", default: [] },
         profileUrl: {
             type: String,

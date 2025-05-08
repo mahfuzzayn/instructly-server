@@ -29,26 +29,29 @@ const getSingleSubject = catchAsync(async (req: Request, res: Response) => {
 });
 
 const getAllSubjects = catchAsync(async (req: Request, res: Response) => {
-    const result = await SubjectServices.getAllSubjectsFromDB();
+    const result = await SubjectServices.getAllSubjectsFromDB(req.query);
 
     sendResponse(res, {
         statusCode: StatusCodes.OK,
         success: true,
         message: "Subjects retrieved successfully!",
-        data: result,
+        meta: result.meta,
+        data: result.result,
     });
 });
 
 const getMySubjects = catchAsync(async (req: Request, res: Response) => {
     const result = await SubjectServices.getMySubjectsFromDB(
-        req.user as IJwtPayload
+        req.user as IJwtPayload,
+        req.query
     );
 
     sendResponse(res, {
         statusCode: StatusCodes.OK,
         success: true,
         message: "Subjects retrieved successfully!",
-        data: result,
+        meta: result.meta,
+        data: result.result,
     });
 });
 

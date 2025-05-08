@@ -1,9 +1,10 @@
-import { Router } from 'express';
-import { TutorController } from './tutor.controller';
+import { Router } from "express";
+import { TutorController } from "./tutor.controller";
 
 const router = Router();
 
-// Define routes
-// router.get('/', TutorController.getAll);
+router.get("/", TutorController.getAllTutors);
 
-export default router;
+router.get("/:tutorId", TutorController.getSingleTutor);
+
+export const TutorRoutes = router;
