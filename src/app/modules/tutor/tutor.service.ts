@@ -81,9 +81,22 @@ const getAllTutorsFromDB = async (query: Record<string, unknown>) => {
 };
 
 const getSingleTutorFromDB = async (tutorId: string) => {
-    const tutor = await Tutor.findById(tutorId).populate(
-        "user reviews subjects"
-    );
+    const tutor = await Tutor.findById(tutorId)
+        .populate("user")
+        .populate({
+            path: "reviews",
+            populate: [
+                {
+                    path: "student",
+                    populate: [{ path: "user", select: "name email" }],
+                },
+                {
+                    path: "tutor",
+                    populate: [{ path: "user", select: "name email" }],
+                },
+            ],
+        })
+        .populate("subjects");
 
     if (!tutor) {
         throw new AppError(StatusCodes.NOT_FOUND, "No tutors were found!");

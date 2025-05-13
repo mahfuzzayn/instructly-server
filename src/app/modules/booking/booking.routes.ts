@@ -7,7 +7,7 @@ const router = Router();
 
 router.post(
     "/create-booking",
-    auth(UserRole.STUDENT, UserRole.TUTOR),
+    auth(UserRole.STUDENT),
     BookingController.createBooking
 );
 
@@ -15,6 +15,12 @@ router.get(
     "/:bookingId",
     auth(UserRole.STUDENT, UserRole.TUTOR),
     BookingController.getSingleBooking
+);
+
+router.get(
+    "/trx/:trxId",
+    auth(UserRole.STUDENT, UserRole.TUTOR),
+    BookingController.getSingleBookingByTrxId
 );
 
 router.get(

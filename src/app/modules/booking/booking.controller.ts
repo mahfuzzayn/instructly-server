@@ -31,8 +31,21 @@ const getSingleBooking = catchAsync(async (req: Request, res: Response) => {
     });
 });
 
+const getSingleBookingByTrxId = catchAsync(async (req: Request, res: Response) => {
+    const { trxId } = req.params;
+    const result = await BookingServices.getSingleBookingByTrxIdFromDB(trxId);
+
+    sendResponse(res, {
+        statusCode: StatusCodes.OK,
+        success: true,
+        message: "Booking retrieved successfully!",
+        data: result,
+    });
+});
+
 const getMyBookings = catchAsync(async (req: Request, res: Response) => {
     const result = await BookingServices.getMyBookingsFromDB(
+        req.query,
         req.user as IJwtPayload
     );
 
@@ -40,7 +53,8 @@ const getMyBookings = catchAsync(async (req: Request, res: Response) => {
         statusCode: StatusCodes.OK,
         success: true,
         message: "Bookings retrieved successfully!",
-        data: result,
+        meta: result!.meta,
+        data: result!.result,
     });
 });
 
@@ -62,10 +76,7 @@ const changeBookingStatus = catchAsync(async (req: Request, res: Response) => {
 
 const initiatePayment = catchAsync(async (req: Request, res: Response) => {
     const { bookingId } = req.params;
-    const result = await BookingServices.initiatePaymentFromDB(
-        bookingId,
-        req.user as IJwtPayload
-    );
+    const result = await BookingServices.initiatePaymentFromDB(bookingId);
 
     sendResponse(res, {
         statusCode: StatusCodes.OK,
@@ -78,6 +89,7 @@ const initiatePayment = catchAsync(async (req: Request, res: Response) => {
 export const BookingController = {
     createBooking,
     getSingleBooking,
+    getSingleBookingByTrxId,
     getMyBookings,
     changeBookingStatus,
     initiatePayment,

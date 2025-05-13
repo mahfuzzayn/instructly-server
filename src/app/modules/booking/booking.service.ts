@@ -10,6 +10,7 @@ import config from "../../config";
 import SSLCommerzPayment from "sslcommerz-lts";
 import mongoose from "mongoose";
 import moment from "moment";
+import QueryBuilder from "../../builder/QueryBuilder";
 
 const createBookingIntoDB = async (
     payload: IBooking,
@@ -26,7 +27,7 @@ const createBookingIntoDB = async (
             throw new AppError(StatusCodes.NOT_FOUND, "Student not found!");
         }
 
-        const tutor = await Tutor.findById(payload?.tutor);
+        const tutor = await Tutor.findById(payload?.tutor).select("+bookings");
 
         if (!tutor) {
             throw new AppError(StatusCodes.NOT_FOUND, "Tutor not found!");
@@ -95,7 +96,7 @@ const createBookingIntoDB = async (
             );
         }
 
-        const totalHours = totalHoursPerMonth * months;
+        const totalHours = parseFloat((totalHoursPerMonth * months).toFixed(2));
 
         if (totalHours <= 0) {
             throw new AppError(
@@ -105,7 +106,9 @@ const createBookingIntoDB = async (
         }
 
         payload.totalHours = totalHours;
-        payload.price = parseFloat(String(tutor?.hourlyRate * totalHours));
+        payload.price = parseFloat(
+            String((tutor?.hourlyRate * totalHours).toFixed(2))
+        );
         payload.timeSlots = availabilityTimes;
 
         const bookingCreated = new Booking(payload);
@@ -133,7 +136,15 @@ const createBookingIntoDB = async (
 };
 
 const getSingleBookingFromDB = async (id: string) => {
-    const booking = await Booking.findById(id);
+    const booking = await Booking.findById(id)
+        .populate({
+            path: "student",
+            populate: "user",
+        })
+        .populate({
+            path: "tutor",
+            populate: "user subjects",
+        });
 
     if (!booking) {
         throw new AppError(
@@ -145,7 +156,23 @@ const getSingleBookingFromDB = async (id: string) => {
     return booking;
 };
 
-const getMyBookingsFromDB = async (authUser: IJwtPayload) => {
+const getSingleBookingByTrxIdFromDB = async (id: string) => {
+    const booking = await Booking.findOne({ transactionId: id });
+
+    if (!booking) {
+        throw new AppError(
+            StatusCodes.NOT_FOUND,
+            "No booking found by the provided transaction id!"
+        );
+    }
+
+    return booking;
+};
+
+const getMyBookingsFromDB = async (
+    query: Record<string, unknown>,
+    authUser: IJwtPayload
+) => {
     if (authUser?.role === "tutor") {
         const tutor = await Tutor.findOne({ user: authUser?.userId });
 
@@ -153,7 +180,16 @@ const getMyBookingsFromDB = async (authUser: IJwtPayload) => {
             throw new AppError(StatusCodes.NOT_FOUND, "Tutor not found!");
         }
 
-        const bookings = await Booking.find({ tutor: tutor?._id });
+        const bookingsQuery = new QueryBuilder(
+            Booking.find({ tutor: tutor?._id }),
+            query
+        )
+            .sort()
+            .paginate()
+            .fields();
+
+        const bookings = await bookingsQuery.modelQuery;
+        const meta = await bookingsQuery.countTotal();
 
         if (!bookings) {
             throw new AppError(
@@ -162,7 +198,10 @@ const getMyBookingsFromDB = async (authUser: IJwtPayload) => {
             );
         }
 
-        return bookings;
+        return {
+            meta,
+            result: bookings,
+        };
     } else if (authUser?.role === "student") {
         const student = await Student.findOne({ user: authUser?.userId });
 
@@ -170,7 +209,16 @@ const getMyBookingsFromDB = async (authUser: IJwtPayload) => {
             throw new AppError(StatusCodes.NOT_FOUND, "Student not found!");
         }
 
-        const bookings = await Booking.find({ student: student?._id });
+        const bookingsQuery = new QueryBuilder(
+            Booking.find({ student: student?._id }),
+            query
+        )
+            .sort()
+            .paginate()
+            .fields();
+
+        const bookings = await bookingsQuery.modelQuery;
+        const meta = await bookingsQuery.countTotal();
 
         if (!bookings) {
             throw new AppError(
@@ -179,7 +227,10 @@ const getMyBookingsFromDB = async (authUser: IJwtPayload) => {
             );
         }
 
-        return bookings;
+        return {
+            meta,
+            result: bookings,
+        };
     }
 
     return null;
@@ -261,10 +312,7 @@ const store_id = config.ssl.store_id as string;
 const store_passwd = config.ssl.store_pass as string;
 const is_live = false;
 
-const initiatePaymentFromDB = async (
-    bookingId: string,
-    authUser: IJwtPayload
-) => {
+const initiatePaymentFromDB = async (bookingId: string) => {
     const booking = await Booking.findById(bookingId);
 
     if (!booking) {
@@ -344,6 +392,7 @@ const initiatePaymentFromDB = async (
 export const BookingServices = {
     createBookingIntoDB,
     getSingleBookingFromDB,
+    getSingleBookingByTrxIdFromDB,
     getMyBookingsFromDB,
     changeBookingStatusIntoDB,
     initiatePaymentFromDB,

@@ -87,12 +87,18 @@ const validatePaymentService = async (tran_id: string) => {
 
         await session.commitTransaction();
 
-        return true;
+        return {
+            success: true,
+            transactionId: tran_id,
+        };
     } catch (error) {
         await session.abortTransaction();
 
         console.error(error);
-        return false;
+        return {
+            success: false,
+            transactionId: tran_id,
+        };
     } finally {
         session.endSession();
     }
