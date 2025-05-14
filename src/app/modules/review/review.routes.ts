@@ -12,6 +12,12 @@ router.post(
     ReviewController.giveReview
 );
 
+router.get(
+    "/me",
+    auth(UserRole.STUDENT, UserRole.TUTOR),
+    ReviewController.getMyReviews
+);
+
 router.get("/:reviewId", ReviewController.getSingleReview);
 
 router.get("/", ReviewController.getAllReviews);

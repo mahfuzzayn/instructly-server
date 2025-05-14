@@ -53,8 +53,8 @@ const getMyBookings = catchAsync(async (req: Request, res: Response) => {
         statusCode: StatusCodes.OK,
         success: true,
         message: "Bookings retrieved successfully!",
-        meta: result!.meta,
-        data: result!.result,
+        meta: result?.meta,
+        data: result?.result,
     });
 });
 

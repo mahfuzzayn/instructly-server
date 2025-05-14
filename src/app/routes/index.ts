@@ -6,6 +6,7 @@ import { BookingRoutes } from "../modules/booking/booking.routes";
 import { SSLRoutes } from "../modules/sslcommerz/sslcommerz.routes";
 import { ReviewRoutes } from "../modules/review/review.routes";
 import { TutorRoutes } from "../modules/tutor/tutor.routes";
+import { NewsRoutes } from "../modules/news/news.route";
 const router = Router();
 
 const moduleRoutes = [
@@ -36,6 +37,10 @@ const moduleRoutes = [
     {
         path: "/ssl",
         route: SSLRoutes,
+    },
+    {
+        path: "/news",
+        route: NewsRoutes,
     },
 ];
 

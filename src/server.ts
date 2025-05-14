@@ -36,7 +36,7 @@ async function ignition() {
       //await seed();
 
       server = app.listen(config.port, () => {
-         console.log(`🍁 Instructly Server is running on port ${config.port}\n\t<- http://localhost:5000/ ->`);
+         console.log(`🍁 Instructly Server is running on port ${config.port}\n\t<- https://instructly-server.vercel.app/ OR http://localhost:5000/ ->`);
       });
 
       // Listen for termination signals
