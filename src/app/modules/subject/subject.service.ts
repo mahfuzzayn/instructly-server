@@ -103,7 +103,10 @@ const getMySubjectsFromDB = async (
             status: SubjectStatus.ACTIVE,
         }).populate("tutor"),
         query
-    ).paginate();
+    )
+        .sort()
+        .paginate()
+        .fields();
 
     const subjects = await subjectsQuery.modelQuery;
 
