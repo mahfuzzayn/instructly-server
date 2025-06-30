@@ -23,9 +23,10 @@ router.get(
     BookingController.getSingleBookingByTrxId
 );
 
+// Admin will retrieve all bookings. Tutor & Studnet will only retrieve their bookings.
 router.get(
     "/",
-    auth(UserRole.STUDENT, UserRole.TUTOR),
+    auth(UserRole.STUDENT, UserRole.TUTOR, UserRole.ADMIN),
     BookingController.getMyBookings
 );
 

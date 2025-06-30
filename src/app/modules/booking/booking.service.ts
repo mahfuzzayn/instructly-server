@@ -11,6 +11,7 @@ import SSLCommerzPayment from "sslcommerz-lts";
 import mongoose from "mongoose";
 import moment from "moment";
 import QueryBuilder from "../../builder/QueryBuilder";
+import Admin from "../admin/admin.model";
 
 const createBookingIntoDB = async (
     payload: IBooking,
@@ -173,7 +174,33 @@ const getMyBookingsFromDB = async (
     query: Record<string, unknown>,
     authUser: IJwtPayload
 ) => {
-    if (authUser?.role === "tutor") {
+    if (authUser?.role === "admin") {
+        const admin = await Admin.findOne({ user: authUser?.userId });
+
+        if (!admin) {
+            throw new AppError(StatusCodes.NOT_FOUND, "Admin not found!");
+        }
+
+        const bookingsQuery = new QueryBuilder(Booking.find(), query)
+            .sort()
+            .paginate()
+            .fields();
+
+        const bookings = await bookingsQuery.modelQuery;
+        const meta = await bookingsQuery.countTotal();
+
+        if (!bookings) {
+            throw new AppError(
+                StatusCodes.NOT_FOUND,
+                "No bookings were found!"
+            );
+        }
+
+        return {
+            meta,
+            result: bookings,
+        };
+    } else if (authUser?.role === "tutor") {
         const tutor = await Tutor.findOne({ user: authUser?.userId });
 
         if (!tutor) {
