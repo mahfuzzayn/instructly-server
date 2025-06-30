@@ -15,8 +15,13 @@ router.post(
     UserController.registerUser
 );
 
-router.get("/me", auth(UserRole.STUDENT, UserRole.TUTOR), UserController.getMe);
+router.get(
+    "/me",
+    auth(UserRole.STUDENT, UserRole.TUTOR, UserRole.ADMIN),
+    UserController.getMe
+);
 
+// Student Routes
 router.patch(
     "/student/update-profile",
     auth(UserRole.STUDENT),
@@ -26,6 +31,7 @@ router.patch(
     UserController.updateStudentProfile
 );
 
+// Tutor Routes
 router.patch(
     "/tutor/update-profile",
     auth(UserRole.TUTOR),
@@ -33,6 +39,25 @@ router.patch(
     parseBody,
     validateRequest(UserValidation.updateTutorProfileValidationSchema),
     UserController.updateTutorProfile
+);
+
+// Admin Routes
+router.patch(
+    "/admin/update-profile",
+    auth(UserRole.ADMIN),
+    multerUpload.single("image"),
+    parseBody,
+    validateRequest(UserValidation.updateAdminProfileValidationSchema),
+    UserController.updateAdminProfile
+);
+
+router.get("/", auth(UserRole.ADMIN), UserController.getAllUsers);
+
+router.patch(
+    "/:userId",
+    auth(UserRole.ADMIN),
+    validateRequest(UserValidation.updateUserByAdminValidationSchema),
+    UserController.updateUserByAdmin
 );
 
 export const UserRoutes = router;

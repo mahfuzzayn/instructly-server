@@ -12,6 +12,8 @@ import { IJwtPayload } from "../auth/auth.interface";
 import { IImageFile } from "../../interface/IImageFile";
 import moment from "moment";
 import Subject from "../subject/subject.model";
+import Admin from "../admin/admin.model";
+import { IAdmin } from "../admin/admin.interface";
 
 const registerUserIntoDB = async (userData: IUser) => {
     const session = await mongoose.startSession();
@@ -35,14 +37,32 @@ const registerUserIntoDB = async (userData: IUser) => {
         const user = new User(userData);
         const createdUser = await user.save({ session });
 
-        // Create Role based Tutor or Student
-        if (userData?.role === "tutor") {
+        // Create Role based Admin or Tutor or Student
+        if (userData?.role === "admin") {
+            const adminData = {
+                name: userData?.name,
+                email: userData?.email,
+                user: createdUser?._id,
+            };
+            const admin = new Admin(adminData);
+
+            // Create Student
+            await admin.save({ session });
+
+            await session.commitTransaction();
+
+            return await AuthService.loginUser({
+                email: userData?.email,
+                password: userData?.password,
+            });
+        } else if (userData?.role === "tutor") {
             const tutorData = {
                 name: userData?.name,
                 email: userData?.email,
                 user: createdUser?._id,
             };
             const tutor = new Tutor(tutorData);
+
             // Create Tutor
             await tutor.save({ session });
 
@@ -59,6 +79,7 @@ const registerUserIntoDB = async (userData: IUser) => {
                 user: createdUser?._id,
             };
             const student = new Student(studentData);
+
             // Create Student
             await student.save({ session });
 
@@ -92,7 +113,15 @@ const getMeFromDB = async (authUser: IJwtPayload) => {
         throw new AppError(StatusCodes.NOT_FOUND, "User not found!");
     }
 
-    if (user?.role === "tutor") {
+    if (user?.role === "admin") {
+        const admin = await Admin.findOne({ user: user?._id });
+
+        if (!admin) {
+            throw new AppError(StatusCodes.NOT_FOUND, "Admin not found!");
+        }
+
+        return admin;
+    } else if (user?.role === "tutor") {
         const tutor = await Tutor.findOne({ user: user?._id }).populate(
             "user subjects reviews bookings"
         );
@@ -318,9 +347,95 @@ const updateTutorProfileIntoDB = async (
     }
 };
 
+const updateAdminProfileIntoDB = async (
+    file: IImageFile,
+    payload: Partial<IAdmin>,
+    authUser: IJwtPayload
+) => {
+    const isUserExists = await User.findById(authUser?.userId);
+
+    if (!isUserExists) {
+        throw new AppError(StatusCodes.NOT_FOUND, "User not found!");
+    }
+
+    if (!isUserExists.isActive) {
+        throw new AppError(StatusCodes.BAD_REQUEST, "User is not active!");
+    }
+
+    if (file && file.path) {
+        payload.profileUrl = file.path;
+    }
+
+    const { ...filteredPayload } = payload;
+
+    const updatedData: any = {
+        ...filteredPayload,
+    };
+
+    const result = await Admin.findOneAndUpdate(
+        { user: authUser?.userId },
+        updatedData,
+        {
+            new: true,
+        }
+    );
+
+    return result;
+};
+
+// Admin Services
+const getAllUsersFromDB = async (authUser: IJwtPayload) => {
+    const users = await User.find({
+        isActive: true,
+        _id: { $ne: authUser?.userId },
+    });
+
+    if (!users) {
+        throw new AppError(StatusCodes.NOT_FOUND, "No users were found.");
+    }
+
+    return users;
+};
+
+const updateUserByAdminIntoDB = async (
+    authUser: IJwtPayload,
+    userId: string,
+    payload: Partial<IUser>
+) => {
+    if (userId === authUser?.userId.toString()) {
+        throw new AppError(
+            StatusCodes.BAD_REQUEST,
+            "You cannot update yourself."
+        );
+    }
+
+    const user = await User.findById(userId);
+
+    if (!user) {
+        throw new AppError(StatusCodes.NOT_FOUND, "No user were found.");
+    }
+
+    const { name, email, role, ...filteredPayload } = payload;
+
+    const updatedData = {
+        ...filteredPayload,
+    };
+
+    const updatedUser = User.findOneAndUpdate({ _id: userId }, updatedData, {
+        new: true,
+    });
+
+    return updatedUser;
+};
+
 export const UserServices = {
     registerUserIntoDB,
     getMeFromDB,
     updateStudentProfileIntoDB,
     updateTutorProfileIntoDB,
+    updateAdminProfileIntoDB,
+
+    // Admin Services
+    getAllUsersFromDB,
+    updateUserByAdminIntoDB,
 };

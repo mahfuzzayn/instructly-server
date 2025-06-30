@@ -6,7 +6,9 @@ const registerUserValidationSchema = z.object({
         email: z.string().email("Invalid email address"),
         password: z.string(),
         name: z.string(),
-        role: z.enum(["student", "tutor"]).default("student"),
+        role: z
+            .enum([UserRole.STUDENT, UserRole.TUTOR, UserRole.ADMIN])
+            .default(UserRole.STUDENT),
     }),
 });
 
@@ -53,8 +55,22 @@ const updateTutorProfileValidationSchema = z.object({
     }),
 });
 
+const updateAdminProfileValidationSchema = z.object({
+    body: z.object({
+        bio: z.string().optional(),
+    }),
+});
+
+const updateUserByAdminValidationSchema = z.object({
+    body: z.object({
+        isActive: z.boolean().optional(),
+    }),
+});
+
 export const UserValidation = {
     registerUserValidationSchema,
     updateStudentProfileValidationSchema,
     updateTutorProfileValidationSchema,
+    updateAdminProfileValidationSchema,
+    updateUserByAdminValidationSchema,
 };

@@ -71,9 +71,59 @@ const updateTutorProfile = catchAsync(async (req: Request, res: Response) => {
     });
 });
 
+const updateAdminProfile = catchAsync(async (req: Request, res: Response) => {
+    const result = await UserServices.updateAdminProfileIntoDB(
+        req.file as IImageFile,
+        req.body,
+        req.user as IJwtPayload
+    );
+
+    sendResponse(res, {
+        statusCode: StatusCodes.OK,
+        success: true,
+        message: "Admin profile has been updated successfully!",
+        data: result,
+    });
+});
+
+// Admin Options
+const getAllUsers = catchAsync(async (req: Request, res: Response) => {
+    const result = await UserServices.getAllUsersFromDB(
+        req.user as IJwtPayload
+    );
+
+    sendResponse(res, {
+        statusCode: StatusCodes.OK,
+        success: true,
+        message: "Users retrieved successfully!",
+        data: result,
+    });
+});
+
+const updateUserByAdmin = catchAsync(async (req: Request, res: Response) => {
+    const { userId } = req.params;
+    const result = await UserServices.updateUserByAdminIntoDB(
+        req.user as IJwtPayload,
+        userId,
+        req.body
+    );
+
+    sendResponse(res, {
+        statusCode: StatusCodes.OK,
+        success: true,
+        message: "User updated successfully!",
+        data: result,
+    });
+});
+
 export const UserController = {
     registerUser,
     getMe,
     updateStudentProfile,
     updateTutorProfile,
+    updateAdminProfile,
+
+    // Admin Options
+    getAllUsers,
+    updateUserByAdmin,
 };

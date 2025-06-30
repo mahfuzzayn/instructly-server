@@ -7,6 +7,7 @@ import { SSLRoutes } from "../modules/sslcommerz/sslcommerz.routes";
 import { ReviewRoutes } from "../modules/review/review.routes";
 import { TutorRoutes } from "../modules/tutor/tutor.routes";
 import { NewsRoutes } from "../modules/news/news.route";
+import { AdminRoutes } from "../modules/admin/admin.routes";
 const router = Router();
 
 const moduleRoutes = [
@@ -17,6 +18,10 @@ const moduleRoutes = [
     {
         path: "/tutors",
         route: TutorRoutes,
+    },
+    {
+        path: "/admins",
+        route: AdminRoutes,
     },
     {
         path: "/auth",

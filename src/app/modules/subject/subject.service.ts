@@ -71,7 +71,10 @@ const getAllSubjectsFromDB = async (query: Record<string, unknown>) => {
     const subjectsQuery = new QueryBuilder(
         Subject.find({ status: SubjectStatus.ACTIVE }).populate("tutor"),
         query
-    );
+    )
+        .sort()
+        .paginate()
+        .fields();
 
     const subjects = await subjectsQuery.modelQuery;
 

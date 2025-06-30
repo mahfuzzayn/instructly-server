@@ -24,7 +24,7 @@ const userSchema = new Schema<IUser, UserModel>(
         },
         role: {
             type: String,
-            enum: [UserRole.STUDENT, UserRole.TUTOR],
+            enum: [UserRole.STUDENT, UserRole.TUTOR, UserRole.ADMIN],
             default: UserRole.STUDENT,
         },
         isActive: {
