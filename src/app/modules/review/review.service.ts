@@ -188,9 +188,39 @@ const getMyReviewsFromDB = async (
     }
 };
 
+// Admin Services
+const changeReviewVisibilityByAdminIntoDB = async (
+    authUser: IJwtPayload,
+    reviewId: string,
+    payload: Partial<IReview>
+) => {
+    const review = await Review.findById(reviewId);
+
+    if (!review) {
+        throw new AppError(StatusCodes.NOT_FOUND, "Review not found.");
+    }
+
+    const { tutor, student, rating, comment, ...filteredPayload } = payload;
+
+    const updatedData: any = {
+        ...filteredPayload,
+    };
+
+    const updatedReview = await Review.findOneAndUpdate(
+        { _id: reviewId },
+        updatedData,
+        { new: true }
+    );
+
+    return updatedReview;
+};
+
 export const ReviewServices = {
     giveReviewIntoDB,
     getSingleReviewFromDB,
     getAllReviewsFromDB,
     getMyReviewsFromDB,
+
+    // Admin Services
+    changeReviewVisibilityByAdminIntoDB,
 };

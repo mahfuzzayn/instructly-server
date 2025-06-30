@@ -17,6 +17,10 @@ const reviewSchema = new Schema<IReview>(
             type: String,
             required: true,
         },
+        isVisible: {
+            type: Boolean,
+            default: true,
+        },
     },
     {
         timestamps: true,

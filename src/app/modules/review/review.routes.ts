@@ -3,6 +3,8 @@ import { ReviewController } from "./review.controller";
 import auth from "../../middleware/auth";
 import User from "../user/user.model";
 import { UserRole } from "../user/user.interface";
+import validateRequest from "../../middleware/validateRequest";
+import { ReviewValidations } from "./review.validation";
 
 const router = Router();
 
@@ -20,6 +22,13 @@ router.get(
 
 router.get("/:reviewId", ReviewController.getSingleReview);
 
-router.get("/", ReviewController.getAllReviews);
+router.get("/", auth(UserRole.ADMIN), ReviewController.getAllReviews);
+
+router.patch(
+    "/:reviewId/change-visibility",
+    auth(UserRole.ADMIN),
+    validateRequest(ReviewValidations.changeReviewVisibilityByAdminValidation),
+    ReviewController.changeReviewVisibilityByAdmin
+);
 
 export const ReviewRoutes = router;

@@ -54,9 +54,31 @@ const getMyReviews = catchAsync(async (req: Request, res: Response) => {
     });
 });
 
+// Admin Options
+const changeReviewVisibilityByAdmin = catchAsync(
+    async (req: Request, res: Response) => {
+        const { reviewId } = req.params;
+        const result = await ReviewServices.changeReviewVisibilityByAdminIntoDB(
+            req.user as IJwtPayload,
+            reviewId,
+            req.body
+        );
+
+        sendResponse(res, {
+            statusCode: StatusCodes.OK,
+            success: true,
+            message: "Review visibilty changed successfully!",
+            data: result,
+        });
+    }
+);
+
 export const ReviewController = {
     giveReview,
     getSingleReview,
     getAllReviews,
     getMyReviews,
+
+    // Admin Options
+    changeReviewVisibilityByAdmin,
 };
