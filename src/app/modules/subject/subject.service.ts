@@ -162,6 +162,30 @@ const discontinueSubjectFromDB = async (id: string) => {
     return result;
 };
 
+// Admin Services
+const changeSubjectStatusIntoDB = async (
+    id: string,
+    payload: Partial<ISubject>
+) => {
+    const isSubjectExists = await Subject.findById(id);
+
+    if (!isSubjectExists) {
+        throw new AppError(StatusCodes.NOT_FOUND, "Subject not found!");
+    }
+
+    const { tutor, name, gradeLevel, category, ...filteredPayload } = payload;
+
+    const updatedData: any = {
+        ...filteredPayload,
+    };
+
+    const result = await Subject.findByIdAndUpdate(id, updatedData, {
+        new: true,
+    });
+
+    return result;
+};
+
 export const SubjectServices = {
     createSubjectIntoDB,
     getSingleSubjectFromDB,
@@ -169,4 +193,7 @@ export const SubjectServices = {
     getMySubjectsFromDB,
     updateSubjectIntoDB,
     discontinueSubjectFromDB,
+
+    // Admin Services
+    changeSubjectStatusIntoDB,
 };

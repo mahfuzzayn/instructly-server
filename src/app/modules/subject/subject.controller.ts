@@ -82,6 +82,24 @@ const discontinueSubject = catchAsync(async (req: Request, res: Response) => {
     });
 });
 
+// Admin Options
+const changeSubjectStatusByAdmin = catchAsync(
+    async (req: Request, res: Response) => {
+        const { subjectId } = req.params;
+        const result = await SubjectServices.changeSubjectStatusIntoDB(
+            subjectId,
+            req.body
+        );
+
+        sendResponse(res, {
+            statusCode: StatusCodes.OK,
+            success: true,
+            message: `Subject status changed to ${result?.status} successfully!`,
+            data: result,
+        });
+    }
+);
+
 export const SubjectController = {
     createSubject,
     getSingleSubject,
@@ -89,4 +107,7 @@ export const SubjectController = {
     getMySubjects,
     updateSubject,
     discontinueSubject,
+
+    // Admin Options
+    changeSubjectStatusByAdmin,
 };
