@@ -13,7 +13,7 @@ router.post(
 
 router.get(
     "/:bookingId",
-    auth(UserRole.STUDENT, UserRole.TUTOR),
+    auth(UserRole.STUDENT, UserRole.TUTOR, UserRole.ADMIN),
     BookingController.getSingleBooking
 );
 

@@ -1,9 +1,16 @@
-import { Router } from 'express';
-import { StudentController } from './student.controller';
+import { Router } from "express";
+import { StudentController } from "./student.controller";
+import auth from "../../middleware/auth";
+import { UserRole } from "../user/user.interface";
 
 const router = Router();
 
-// Define routes
-// router.get('/', StudentController.getAll);
+router.get("/", auth(UserRole.ADMIN), StudentController.getAllStudents);
 
-export default router;
+router.get(
+    "/:studentId",
+    auth(UserRole.ADMIN, UserRole.TUTOR, UserRole.STUDENT),
+    StudentController.getSingleStudent
+);
+
+export const StudentRoutes = router;

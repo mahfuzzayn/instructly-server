@@ -7,6 +7,8 @@ import { SubjectValidations } from "./subject.validation";
 
 const router = Router();
 
+router.get("/", SubjectController.getAllSubjects);
+
 router.post(
     "/create-subject",
     auth(UserRole.TUTOR),
@@ -19,13 +21,17 @@ router.get(
     SubjectController.getMySubjects
 );
 
-router.get("/:subjectId", SubjectController.getSingleSubject);
+router.get(
+    "/admin",
+    auth(UserRole.ADMIN),
+    SubjectController.getAllSubjectsForAdmin
+);
 
-router.get("/", SubjectController.getAllSubjects);
+router.get("/:subjectId", SubjectController.getSingleSubject);
 
 router.patch(
     "/:subjectId",
-    auth(UserRole.TUTOR),
+    auth(UserRole.TUTOR, UserRole.ADMIN),
     SubjectController.updateSubject
 );
 

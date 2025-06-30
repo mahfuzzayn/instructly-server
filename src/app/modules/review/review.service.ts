@@ -91,14 +91,31 @@ const getSingleReviewFromDB = async (id: string) => {
     return review;
 };
 
-const getAllReviewsFromDB = async () => {
-    const reviews = await Review.find();
+const getAllReviewsFromDB = async (query: Record<string, unknown>) => {
+    const reviewsQuery = new QueryBuilder(
+        Review.find().populate({
+            path: "student tutor",
+            populate: "user",
+        }),
+        query
+    )
+        .sort()
+        .paginate()
+        .fields();
+    const reviews = await reviewsQuery.modelQuery;
+    const meta = await reviewsQuery.countTotal();
 
     if (!reviews) {
-        throw new AppError(StatusCodes.NOT_FOUND, "No reviews were found!");
+        throw new AppError(
+            StatusCodes.NOT_FOUND,
+            "No reviews were found by the student ID!"
+        );
     }
 
-    return reviews;
+    return {
+        meta,
+        result: reviews,
+    };
 };
 
 const getMyReviewsFromDB = async (
@@ -122,7 +139,7 @@ const getMyReviewsFromDB = async (
         }
 
         const reviewsQuery = new QueryBuilder(
-            Review.find({ student: student?._id }).populate({
+            Review.find({ student: student?._id, isVisible: true }).populate({
                 path: "student tutor",
                 populate: "user",
             }),
@@ -161,7 +178,7 @@ const getMyReviewsFromDB = async (
         }
 
         const reviewsQuery = new QueryBuilder(
-            Review.find({ tutor: tutor?._id }).populate({
+            Review.find({ tutor: tutor?._id, isVisible: true }).populate({
                 path: "student tutor",
                 populate: "user",
             }),

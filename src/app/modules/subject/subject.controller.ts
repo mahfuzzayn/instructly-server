@@ -40,6 +40,22 @@ const getAllSubjects = catchAsync(async (req: Request, res: Response) => {
     });
 });
 
+const getAllSubjectsForAdmin = catchAsync(
+    async (req: Request, res: Response) => {
+        const result = await SubjectServices.getAllSubjectsForAdminFromDB(
+            req.query
+        );
+
+        sendResponse(res, {
+            statusCode: StatusCodes.OK,
+            success: true,
+            message: "Subjects retrieved successfully!",
+            meta: result.meta,
+            data: result.result,
+        });
+    }
+);
+
 const getMySubjects = catchAsync(async (req: Request, res: Response) => {
     const result = await SubjectServices.getMySubjectsFromDB(
         req.user as IJwtPayload,
@@ -110,4 +126,5 @@ export const SubjectController = {
 
     // Admin Options
     changeSubjectStatusByAdmin,
+    getAllSubjectsForAdmin,
 };

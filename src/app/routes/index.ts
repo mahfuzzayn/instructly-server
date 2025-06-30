@@ -8,12 +8,17 @@ import { ReviewRoutes } from "../modules/review/review.routes";
 import { TutorRoutes } from "../modules/tutor/tutor.routes";
 import { NewsRoutes } from "../modules/news/news.route";
 import { AdminRoutes } from "../modules/admin/admin.routes";
+import { StudentRoutes } from "../modules/student/student.routes";
 const router = Router();
 
 const moduleRoutes = [
     {
         path: "/users",
         route: UserRoutes,
+    },
+    {
+        path: "/students",
+        route: StudentRoutes,
     },
     {
         path: "/tutors",

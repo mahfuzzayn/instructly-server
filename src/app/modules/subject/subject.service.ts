@@ -90,6 +90,29 @@ const getAllSubjectsFromDB = async (query: Record<string, unknown>) => {
     };
 };
 
+const getAllSubjectsForAdminFromDB = async (query: Record<string, unknown>) => {
+    const subjectsQuery = new QueryBuilder(
+        Subject.find().populate("tutor"),
+        query
+    )
+        .sort()
+        .paginate()
+        .fields();
+
+    const subjects = await subjectsQuery.modelQuery;
+
+    const meta = await subjectsQuery.countTotal();
+
+    if (!subjects) {
+        throw new AppError(StatusCodes.NOT_FOUND, "No subjects were found!");
+    }
+
+    return {
+        meta,
+        result: subjects,
+    };
+};
+
 const getMySubjectsFromDB = async (
     authUser: IJwtPayload,
     query: Record<string, unknown>
@@ -196,4 +219,5 @@ export const SubjectServices = {
 
     // Admin Services
     changeSubjectStatusIntoDB,
+    getAllSubjectsForAdminFromDB,
 };

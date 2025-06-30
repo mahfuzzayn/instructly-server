@@ -99,7 +99,7 @@ const getSingleTutorFromDB = async (tutorId: string) => {
         .populate("subjects");
 
     if (!tutor) {
-        throw new AppError(StatusCodes.NOT_FOUND, "No tutors were found!");
+        throw new AppError(StatusCodes.NOT_FOUND, "No tutor were found!");
     }
 
     return tutor;

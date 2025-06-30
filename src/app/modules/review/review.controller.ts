@@ -29,13 +29,14 @@ const getSingleReview = catchAsync(async (req: Request, res: Response) => {
 });
 
 const getAllReviews = catchAsync(async (req: Request, res: Response) => {
-    const result = await ReviewServices.getAllReviewsFromDB();
+    const result = await ReviewServices.getAllReviewsFromDB(req.query);
 
     sendResponse(res, {
         statusCode: StatusCodes.OK,
         success: true,
         message: "Reviews retrieved successfully!",
-        data: result,
+        data: result?.result,
+        meta: result?.meta,
     });
 });
 

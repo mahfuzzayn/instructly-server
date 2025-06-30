@@ -15,6 +15,8 @@ import Subject from "../subject/subject.model";
 import Admin from "../admin/admin.model";
 import { IAdmin } from "../admin/admin.interface";
 
+type ATSProfileName = { name: string };
+
 const registerUserIntoDB = async (userData: IUser) => {
     const session = await mongoose.startSession();
 
@@ -114,7 +116,7 @@ const getMeFromDB = async (authUser: IJwtPayload) => {
     }
 
     if (user?.role === "admin") {
-        const admin = await Admin.findOne({ user: user?._id });
+        const admin = await Admin.findOne({ user: user?._id }).populate("user");
 
         if (!admin) {
             throw new AppError(StatusCodes.NOT_FOUND, "Admin not found!");
@@ -146,65 +148,89 @@ const getMeFromDB = async (authUser: IJwtPayload) => {
 
 const updateStudentProfileIntoDB = async (
     file: IImageFile,
-    payload: Partial<IStudent>,
+    payload: Partial<IStudent & ATSProfileName>,
     authUser: IJwtPayload
 ) => {
-    const isUserExists = await User.findById(authUser?.userId);
+    const session = await mongoose.startSession();
 
-    if (!isUserExists) {
-        throw new AppError(StatusCodes.NOT_FOUND, "User not found!");
-    }
+    try {
+        session.startTransaction();
 
-    if (!isUserExists.isActive) {
-        throw new AppError(StatusCodes.BAD_REQUEST, "User is not active!");
-    }
+        const isUserExists = await User.findById(authUser?.userId);
 
-    if (file && file.path) {
-        payload.profileUrl = file.path;
-    }
-
-    const {
-        reviewsGiven,
-        bookingHistory,
-        subjectsOfInterest,
-        ...filteredPayload
-    } = payload;
-
-    const updatedData: any = {
-        ...filteredPayload,
-    };
-
-    if (subjectsOfInterest && Array.isArray(subjectsOfInterest)) {
-        const validSubjects = await Subject.find({
-            _id: { $in: subjectsOfInterest },
-        });
-
-        if (validSubjects.length !== subjectsOfInterest.length) {
-            throw new AppError(
-                StatusCodes.BAD_REQUEST,
-                "Some subjects are invalid or do not exist!"
-            );
+        if (!isUserExists) {
+            throw new AppError(StatusCodes.NOT_FOUND, "User not found!");
         }
 
-        updatedData.$set = {
-            subjectsOfInterest: validSubjects.map((s) => s._id),
+        if (!isUserExists.isActive) {
+            throw new AppError(StatusCodes.BAD_REQUEST, "User is not active!");
+        }
+
+        if (file && file.path) {
+            payload.profileUrl = file.path;
+        }
+
+        const {
+            reviewsGiven,
+            bookingHistory,
+            subjectsOfInterest,
+            ...filteredPayload
+        } = payload;
+
+        const updatedData: any = {
+            ...filteredPayload,
         };
-    }
 
-    const result = await Student.findOneAndUpdate(
-        { user: authUser?.userId },
-        updatedData,
-        {
-            new: true,
+        if (subjectsOfInterest && Array.isArray(subjectsOfInterest)) {
+            const validSubjects = await Subject.find({
+                _id: { $in: subjectsOfInterest },
+            });
+
+            if (validSubjects.length !== subjectsOfInterest.length) {
+                throw new AppError(
+                    StatusCodes.BAD_REQUEST,
+                    "Some subjects are invalid or do not exist!"
+                );
+            }
+
+            updatedData.$set = {
+                subjectsOfInterest: validSubjects.map((s) => s._id),
+            };
         }
-    );
 
-    return result;
+        // Update Student User Model Name
+        await User.findOneAndUpdate(
+            { _id: authUser?.userId },
+            { name: payload?.name },
+            { new: true, session }
+        );
+
+        // Update Student Model Date
+        const studentUpdatedResult = await Student.findOneAndUpdate(
+            { user: authUser?.userId },
+            updatedData,
+            {
+                new: true,
+                session,
+            }
+        );
+
+        await session.commitTransaction();
+
+        return studentUpdatedResult;
+    } catch (error) {
+        if (session.inTransaction()) {
+            await session.abortTransaction();
+        }
+        throw error;
+    } finally {
+        await session.endSession();
+    }
 };
 
 const updateTutorProfileIntoDB = async (
     file: IImageFile,
-    payload: Partial<ITutor>,
+    payload: Partial<ITutor & ATSProfileName>,
     authUser: IJwtPayload
 ) => {
     const session = await mongoose.startSession();
@@ -331,14 +357,23 @@ const updateTutorProfileIntoDB = async (
             updatedData.availability = newAvailability;
         }
 
-        const result = await Tutor.findOneAndUpdate(
+        // Update Tutor User Model Name
+        await User.findOneAndUpdate(
+            { _id: authUser?.userId },
+            { name: payload?.name },
+            { new: true, session }
+        );
+
+        // Update Tutor Model Data
+        const tutorUpdatedResult = await Tutor.findOneAndUpdate(
             { user: authUser?.userId },
             updatedData,
             { new: true, session }
         );
 
         await session.commitTransaction();
-        return result;
+
+        return tutorUpdatedResult;
     } catch (error) {
         await session.abortTransaction();
         throw error;
@@ -349,7 +384,7 @@ const updateTutorProfileIntoDB = async (
 
 const updateAdminProfileIntoDB = async (
     file: IImageFile,
-    payload: Partial<IAdmin>,
+    payload: Partial<IAdmin & ATSProfileName>,
     authUser: IJwtPayload
 ) => {
     const isUserExists = await User.findById(authUser?.userId);
@@ -366,27 +401,47 @@ const updateAdminProfileIntoDB = async (
         payload.profileUrl = file.path;
     }
 
-    const { ...filteredPayload } = payload;
+    const session = await mongoose.startSession();
 
-    const updatedData: any = {
-        ...filteredPayload,
-    };
+    try {
+        session.startTransaction();
 
-    const result = await Admin.findOneAndUpdate(
-        { user: authUser?.userId },
-        updatedData,
-        {
-            new: true,
+        // Update Admin User Model Name
+        await User.findOneAndUpdate(
+            { _id: authUser?.userId },
+            { name: payload?.name },
+            {
+                new: true,
+                session,
+            }
+        );
+
+        // Update Admin Model Data
+        const adminUpdatedResult = await Admin.findOneAndUpdate(
+            { user: authUser?.userId },
+            payload,
+            {
+                new: true,
+                session,
+            }
+        );
+
+        await session.commitTransaction();
+
+        return adminUpdatedResult;
+    } catch (error) {
+        if (session.inTransaction()) {
+            await session.abortTransaction();
         }
-    );
-
-    return result;
+        throw error;
+    } finally {
+        await session.endSession();
+    }
 };
 
 // Admin Services
 const getAllUsersFromDB = async (authUser: IJwtPayload) => {
     const users = await User.find({
-        isActive: true,
         _id: { $ne: authUser?.userId },
     });
 
